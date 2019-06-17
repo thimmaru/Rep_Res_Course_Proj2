@@ -1,4 +1,3 @@
-setwd("C:\\Users\\TRUDR\\OneDrive - Monsanto\\Migrated from My PC\\Desktop\\Data\\Reprod.Res\\course_proj_2")
 ##Download data file
 link <- "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
 download.file(url = link, destfile = "StormData")
