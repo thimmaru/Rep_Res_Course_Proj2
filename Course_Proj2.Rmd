@@ -1,0 +1,105 @@
+========================================================
+
+# Title: Reproducible Research: Course Project 2
+
+## Author: Thimmaraju Rudrappa
+
+## Date: 17th June 2019
+
+## Output: html_document
+
+========================================================
+
+## Introduction
+
+Adverse weather conditions such as Storms can severely impact both public health and the economies. More severe events might lead to fatalities, injuries, and property damage. Further, preventing such incidents to the extent possible is a key challenge. This project aims to explore the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database, that tracks characteristics of major storms and weather events in the United States, including when and where they occur, as well as estimates of any fatalities, injuries, and property damage to estimate the severity & impact of such events on human health & economy.
+
+## Downloading and reading the data
+
+```{r}
+##Download data file
+link <- "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2"
+download.file(url = link, destfile = "StormData")
+##Read a file in table format
+StormData <- read.csv(bzfile("StormData"),sep = ",",header=TRUE)
+```
+
+## Data Processing
+
+Property damage estimates were entered as actual dollar amounts (the variable PROPDMG). But they were rounded to three significant digits, followed by an alphabetical character signifying the magnitude of the number, i.e., 1.55B for $1,550,000,000. Alphabetical characters used to signify magnitude include "K" for thousands, "M" for millions, and "B" for billions. So I created a new variable PROPDMGEXP2 and assigned conditionally "K" = 1000, "M" = 1000000, "B" = 1000000000, in other cases 1. These variables are multiplied in the next step.
+
+```{r}
+table(StormData$PROPDMGEXP)
+StormData$PROPDMGEXP2 <- 1
+StormData$PROPDMGEXP2[which(StormData$PROPDMGEXP == "K")] <- 1000
+StormData$PROPDMGEXP2[which(StormData$PROPDMGEXP == "M" | StormData$PROPDMGEXP == "m")] <- 1000000
+StormData$PROPDMGEXP2[which(StormData$PROPDMGEXP == "B")] <- 1000000000
+table(StormData$PROPDMGEXP2)
+```
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+## Impact on human health & living
+To evaluate the health impact, total fatalities and the total injuries for each event type (EVTYPE) are calculated. Following is the r script used for coputing these effects.
+
+```{r}
+StormData %>%
+  select(FATALITIES, EVTYPE) %>%
+  group_by(EVTYPE) %>%
+  summarise(SumFATALITIES = sum(FATALITIES)) %>%
+  top_n(n = 8, wt = SumFATALITIES) %>%
+  ggplot(aes(y = SumFATALITIES, x = reorder(x = EVTYPE, X = SumFATALITIES), fill=EVTYPE))+
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  #geom_text(aes(label=SumFATALITIES), size = 4, hjust = 0.5, vjust = -0.1) +
+  xlab(label = "") +
+  ylab(label = "Death toll") +
+  coord_flip() +
+  theme_light()
+```
+
+### Conclusion: 
+
+From the plot, we can conclude that, of all the event types Tornados caused maximum loss in terms of human lives (death toll) followed by excessive heat and flash floods
+
+```{r}
+StormData %>%
+  select(INJURIES, EVTYPE) %>%
+  group_by(EVTYPE) %>%
+  summarise(SumINJURIES = sum(INJURIES)) %>%
+  top_n(n = 8, wt = SumINJURIES) %>%
+  ggplot(aes(y = SumINJURIES, x = reorder(x = EVTYPE, X = SumINJURIES), fill=EVTYPE))+
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  #geom_text(aes(label=SumINJURIES), size = 4, hjust = 0.5, vjust = -0.1) +
+  xlab(label = "") +
+  ylab(label = "INJURIES") +
+  coord_flip() +
+  theme_light()
+```
+
+### Conclusion: 
+
+From the plot, we can conclude that, of all the event types, Tornados caused maximum loss in terms of injuries to humans followed by TSTM Wind and floods
+
+## Economic Impact
+
+```{r}
+StormData %>%
+  select(PROPDMG, PROPDMGEXP2, EVTYPE) %>%
+  group_by(EVTYPE) %>%
+  mutate(SumPROPDMGEXP = (PROPDMG * PROPDMGEXP2)) %>%
+  summarise(SumPROPDMGEXP2 = sum(SumPROPDMGEXP)) %>%
+  top_n(n = 8, wt = SumPROPDMGEXP2) %>%
+  ggplot(aes(y = SumPROPDMGEXP2, x = reorder(x = EVTYPE, X = SumPROPDMGEXP2), fill=EVTYPE))+
+  geom_bar(stat = "identity", show.legend = FALSE) +
+  #geom_text(aes(label=SumFATALITIES), size = 4, hjust = 0.5, vjust = -0.1) +
+  xlab(label = "") +
+  ylab(label = "Property damage estimates") +
+  coord_flip() +
+  theme_light()
+```
+
+### Conclusion: 
+
+From the plot, we can conclude that, of all the eventtypes, Floods caused maximum loss in terms of property damage followed by Hurricane/Typhoon and Tornados
